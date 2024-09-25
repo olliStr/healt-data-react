@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Query
 from database import engine, SessionLocal, Base, get_db
 import requests
 from sqlalchemy.orm import Session
@@ -27,8 +27,32 @@ def import_data():
     return {"message": "Daten erfolgreich importiert"}
 
 @app.get("/life-expectancy")
-def get_life_expectancy(db: Session = Depends(get_db)):
-    return db.query(LifeExpectancy).all()
+def get_life_expectancy(
+    country: str,
+    db: Session = Depends(get_db)
+    ):
+    # SQL Abfrage
+    data = db.query(LifeExpectancy).filter(LifeExpectancy.country == country).order_by(LifeExpectancy.year).all()
+
+    # Anpassung für das Frontend
+    response_data = [{
+        "country": entry.country,
+        "year": entry.year,
+        "sex": entry.sex,
+        "value": entry.value
+    } for entry in data]
+
+    print(country)
+
+    return response_data
+
+# router für die Extraktion der einzelnen Länder (Dropdown im Frontend)
+@app.get("/countries")
+def get_countries(db: Session = Depends(get_db)):
+    countries = db.query(LifeExpectancy.country).distinct().all()
+    country_list = [c[0] for c in countries]
+    country_list.sort()
+    return country_list
 
 def fetch_and_store_life_expectancy_data():
     response = requests.get("https://ghoapi.azureedge.net/api/WHOSIS_000001")

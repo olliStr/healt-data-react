@@ -8,7 +8,7 @@ const InfoCard = ({ title, description }: { title: string, description: string }
         <p>{title}</p>
       </CardHeader>
       <CardBody>
-        <p>{description}</p>
+        {<p>{description}</p>}
       </CardBody>
     </Card>
   )
