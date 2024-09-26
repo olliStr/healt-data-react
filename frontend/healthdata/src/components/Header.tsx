@@ -15,6 +15,9 @@ const Header = () => {
 
     return (
         <Navbar>
+            <NavbarContent>
+                Health Data
+            </NavbarContent>
             <NavbarItem>
                 <Button
                     className="ml-auto"

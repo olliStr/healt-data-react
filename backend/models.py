@@ -9,3 +9,10 @@ class LifeExpectancy(Base):
     year = Column(Integer, nullable=False)
     sex = Column(String(50), nullable=False)
     value = Column(Float, nullable=False)
+
+class Countries(Base):
+    __tablename__ = "countries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(255), nullable=False)
+    title = Column(String(255), nullable=False)

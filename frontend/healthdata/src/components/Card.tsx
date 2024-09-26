@@ -1,15 +1,24 @@
+import React from "react";
 import {Card, CardHeader, CardBody, CardFooter} from "@nextui-org/card";
 
+interface CardProps {
+    title: string;
+    children: React.ReactNode;
+    footer: string;
+}
 
-const InfoCard = ({ title, description }: { title: string, description: string }) => {
+const InfoCard: React.FC<CardProps> = ({ title,  children, footer }) => {
   return (
     <Card>
       <CardHeader>
         <p>{title}</p>
       </CardHeader>
       <CardBody>
-        {<p>{description}</p>}
+        {children}
       </CardBody>
+      <CardFooter>
+        <p>{footer}</p>
+      </CardFooter>
     </Card>
   )
 }

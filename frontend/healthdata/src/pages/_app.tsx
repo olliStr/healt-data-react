@@ -7,8 +7,10 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <NextUIProvider>
-        <Header/>
-        <Component {...pageProps} />
+        <div className="px-4 sm:px-2 md:px-8 lg:px-12">
+            <Header/>
+            <Component {...pageProps} />
+        </div>
     </NextUIProvider>
   )
 }
