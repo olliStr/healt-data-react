@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Query
 from database import engine, SessionLocal, Base, get_db
 import requests
 from sqlalchemy.orm import Session
-from models import LifeExpectancy, Countries
+from models import LifeExpectancy, Countries, ObesityPrevalence
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, case, inspect
 
@@ -24,9 +24,58 @@ def read_root():
 
 @app.post("/import-data")
 def import_data():
-    fetch_and_store_life_expectancy_data()
-    fetch_and_store_country_data()
+    db: Session = SessionLocal()
+
+    fetch_and_store_data(
+        db=db,
+        Table=LifeExpectancy,
+        url="https://ghoapi.azureedge.net/api/WHOSIS_000001",
+        store_data=store_life_expectancy_data
+    )
+
+    fetch_and_store_data(
+        db=db,
+        Table=Countries,
+        url="https://ghoapi.azureedge.net/api/DIMENSION/COUNTRY/DimensionValues",
+        store_data=store_life_counrty_data
+    )
+
+    fetch_and_store_data(
+        db=db,
+        Table=ObesityPrevalence,
+        url="https://ghoapi.azureedge.net/api/NCD_BMI_30C",
+        store_data=store_obesity_prevalence_data
+    )
+
+    db.close()
     return {"message": "Daten erfolgreich importiert"}
+
+@app.get("/obesity-prevalence")
+def get_life_expectancy(
+    country: str,
+    db: Session = Depends(get_db)
+    ):
+
+    # Abfrage für das gewünschte Land und Sortierung nach Jahr
+    data = db.query(
+        ObesityPrevalence.year,
+        func.max(case((ObesityPrevalence.sex == 'SEX_FMLE', ObesityPrevalence.value), else_=None)).label('female'),
+        func.max(case((ObesityPrevalence.sex == 'SEX_MLE', ObesityPrevalence.value), else_=None)).label('male')
+    ).filter(ObesityPrevalence.country == country)\
+     .group_by(ObesityPrevalence.year)\
+     .order_by(ObesityPrevalence.year).all()
+
+    # Anpassung für das Frontend
+    response_data = [{
+        "year": entry.year,
+        "female": entry.female,
+        "male": entry.male,
+    } for entry in data]
+
+    print(country)
+
+    return response_data
+
 
 @app.get("/life-expectancy")
 def get_life_expectancy(
@@ -62,62 +111,72 @@ def get_countries(db: Session = Depends(get_db)):
     print(country_dict)
     return country_dict
 
-def fetch_and_store_country_data():
-    db: Session = SessionLocal()
+### HELPERS ###
 
-
-    first_country = db.query(Countries).first()
-    print("Ergebnis der ersten Abfrage:", (first_country is not None))
-
-    # Überprüfen, ob die Tabelle bereits existiert
-    if db.query(Countries).first() is None:
-        response = requests.get("https://ghoapi.azureedge.net/api/DIMENSION/COUNTRY/DimensionValues")
-
-        if response.status_code == 200:
-            data = response.json()['value']
-
-            for item in data:
-                entry = Countries(
-                    code=item['Code'],
-                    title=item['Title']
-                )
-                db.add(entry)
-            
-            db.commit()
-        else:
-            print(f'Fehler beim Abrufen der Daten {response.status_code}')
-    else:
-        print("Tabelle ist bereits vorhanden.")
+def fetch_and_store_data(db: Session, Table, url: str, store_data):
     
-    db.close()
-
-def fetch_and_store_life_expectancy_data():
-    
-    db: Session = SessionLocal()
-
     # Überprüfen, ob die Tabelle bereits existiert
-    if db.query(LifeExpectancy).first() is None:
-        response = requests.get("https://ghoapi.azureedge.net/api/WHOSIS_000001")
+    if does_table_exist(db=db, Table=Table):
+        data = fetch_data(url=url)
         
-        if response.status_code == 200:
-            data = response.json()['value']
-
-            for item in data:
-                entry = LifeExpectancy(
-                    country=item['SpatialDim'],
-                    year=item['TimeDim'],
-                    sex=item['Dim1'],
-                    value=float(item['NumericValue'])
-                )
-                db.add(entry)
-
-            db.commit()
+        if data:
+            store_data(db, data)
+            print("Daten erfolgreich abgerufen und gespeichert.")
         else:
-            print(f'Fehler beim Abrufen der Daten {response.status_code}')
+            print("Fehler beim Abrufen der Daten.")
+    
     else:
-        print("Tabelle ist bereits vorhanden.")
+        print("Daten sind bereits vorhanden.")
 
-    db.close()
+        
+
+# Daten aus der Api abfragen
+def fetch_data(url: str):
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        return response.json()['value']
+    else:
+        print(f'Fehler beim Abrufen der Daten: {response.status_code}')
+        return None
+
+## Daten aus der Api in der DB speichern 
+
+# Lebenserwartung in Jahren
+def store_life_expectancy_data(db: Session, data: list):
+    for item in data:
+        entry = LifeExpectancy(
+            country=item['SpatialDim'],
+            year=item['TimeDim'],
+            sex=item['Dim1'],
+            value=float(item['NumericValue'])
+        )
+        db.add(entry)
+    db.commit()
 
 
+# Länder
+def store_life_counrty_data(db: Session, data: list):
+    for item in data:
+        entry = Countries(
+            code=item['Code'],
+            title=item['Title']
+        )
+        db.add(entry)
+    db.commit()
 
+# Prävalenz Übergewicht
+def store_obesity_prevalence_data(db: Session, data: list):
+    for item in data:
+        entry = ObesityPrevalence(
+            country=item['SpatialDim'],
+            year=item['TimeDim'],
+            sex=item['Dim1'],
+            value=float(item['NumericValue'])
+        )
+        db.add(entry)
+    db.commit()
+
+# Überprüfen, ob es eine Tabelle bereits gibt (neues Anlegen von Tabellen)
+def does_table_exist(db: Session, Table):
+    return db.query(Table).first() is None

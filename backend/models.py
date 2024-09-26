@@ -16,3 +16,12 @@ class Countries(Base):
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String(255), nullable=False)
     title = Column(String(255), nullable=False)
+
+class ObesityPrevalence(Base):
+    __tablename__ = "obesity_prevalence"
+
+    id = Column(Integer, primary_key=True, index=True)
+    country = Column(String(255), nullable=False)
+    year = Column(Integer, nullable=False)
+    sex = Column(String(50), nullable=False)
+    value = Column(Float, nullable=False)
