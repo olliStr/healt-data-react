@@ -3,12 +3,14 @@ import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Autocomplete, AutocompleteItem } from "@nextui-org/autocomplete";
 import InfoCard from '@/components/Card';
+import HealthLineChart from '@/components/HealthLineChart';
 
 interface Chart {
     year: number;
     female: number;
     male: number;
 }
+
 const Home = () => {
     const [selCountry, setSelCountry] = useState<string>('DEU');
     const [dataLE, setDataLE] = useState<Chart[]>([]);
@@ -71,7 +73,7 @@ const Home = () => {
         <div>
             {/* Autocomplete Dropdown für Länder */}
             <Autocomplete
-                label="Wähle ein Land aus"
+                label="Choose country"
                 className='py-4 max-w-sx'
                 onSelectionChange={(selectedValue) => setSelCountry(selectedValue as string)}  // Hier wird das ausgewählte Land gesetzt
             >
@@ -82,69 +84,39 @@ const Home = () => {
                 ))}
             </Autocomplete>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                <InfoCard title="Life expectancy (years)" footer="Source: WHO GHO">
+                <InfoCard title="Life expectancy (years)">
                     {/* Liniendiagramm für Männer und Frauen */}
-                    <ResponsiveContainer className="pr-8" width="100%" height={400}>
-                        <LineChart data={dataLE}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="year" />
-                            <YAxis domain={[30, 90]} allowDataOverflow/>
-                            <Tooltip />
-                            <Legend />
-                            {/* Linie für Frauen */}
-                            <Line type="monotone" dataKey="female" stroke="#8884d8" name="Female" />
-                            {/* Linie für Männer */}
-                            <Line type="monotone" dataKey="male" stroke="#82ca9d" name="Male" />
-                        </LineChart>
-                    </ResponsiveContainer>
+                    <HealthLineChart
+                        data={dataLE}
+                        YDomain={[40, 90]}
+                        colorFM="#8884d8"
+                        colorML="#82ca9d"
+                    />
                 </InfoCard>
-                <InfoCard title="Probability (%) of dying between age 30 and exact age 70 from any of cardiovascular disease, cancer, diabetes, or chronic respiratory disease" footer="Source: WHO GHO">
+                <InfoCard title="Probability (%) of dying between age 30 and exact age 70 from any of cardiovascular disease, cancer, diabetes, or chronic respiratory disease">
                     {/* Liniendiagramm für Männer und Frauen */}
-                    <ResponsiveContainer className="pr-8" width="100%" height={400}>
-                        <LineChart data={dataDP}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="year" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            {/* Linie für Frauen */}
-                            <Line type="monotone" dataKey="female" stroke="#8884d8" name="Female" />
-                            {/* Linie für Männer */}
-                            <Line type="monotone" dataKey="male" stroke="#82ca9d" name="Male" />
-                        </LineChart>
-                    </ResponsiveContainer>
+                    <HealthLineChart
+                        data={dataDP}
+                        colorFM="#9b59b6"
+                        colorML="#e67e22"
+                    />
                 </InfoCard>
-                <InfoCard title="Prevalence of obesity among adults (%)" footer="Source: WHO GHO">
+                <InfoCard title="Prevalence of obesity among adults (%)">
                     {/* Liniendiagramm für Männer und Frauen */}
-                    <ResponsiveContainer className="pr-8" width="100%" height={400}>
-                        <LineChart data={dataOP}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="year" />
-                            <YAxis domain={[0, 60]} allowDataOverflow/>
-                            <Tooltip />
-                            <Legend />
-                            {/* Linie für Frauen */}
-                            <Line type="monotone" dataKey="female" stroke="#8884d8" name="Female" />
-                            {/* Linie für Männer */}
-                            <Line type="monotone" dataKey="male" stroke="#82ca9d" name="Male" />
-                        </LineChart>
-                    </ResponsiveContainer>
+                    <HealthLineChart
+                        data={dataOP}
+                        YDomain={[0, 60]}
+                        colorFM="#1abc9c"
+                        colorML="#e91e63"
+                    />
                 </InfoCard>
-                <InfoCard title="Prevalence hypertension among adults aged 30-79 (%)" footer="Source: WHO GHO">
+                <InfoCard title="Prevalence hypertension among adults aged 30-79 (%)">
                     {/* Liniendiagramm für Männer und Frauen */}
-                    <ResponsiveContainer className="pr-8" width="100%" height={400}>
-                        <LineChart data={dataHP}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="year" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            {/* Linie für Frauen */}
-                            <Line type="monotone" dataKey="female" stroke="#8884d8" name="Female" />
-                            {/* Linie für Männer */}
-                            <Line type="monotone" dataKey="male" stroke="#82ca9d" name="Male" />
-                        </LineChart>
-                    </ResponsiveContainer>
+                    <HealthLineChart
+                        data={dataHP}
+                        colorFM="#3498db"
+                        colorML="#e74c3c"
+                    />
                 </InfoCard>
             </div>
         </div>

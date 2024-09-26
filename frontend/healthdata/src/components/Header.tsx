@@ -16,7 +16,7 @@ const Header = () => {
     return (
         <Navbar>
             <NavbarContent>
-                Health Data
+                <p className="text-lg">Health Data App</p>
             </NavbarContent>
             <NavbarItem>
                 <Button
