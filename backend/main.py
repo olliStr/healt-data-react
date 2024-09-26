@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Query
 from database import engine, SessionLocal, Base, get_db
 import requests
 from sqlalchemy.orm import Session
-from models import LifeExpectancy, Countries, ObesityPrevalence
+from models import LifeExpectancy, Countries, ObesityPrevalence, HypertensionPrevalence, DeathProbability
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, case, inspect
 
@@ -37,7 +37,7 @@ def import_data():
         db=db,
         Table=Countries,
         url="https://ghoapi.azureedge.net/api/DIMENSION/COUNTRY/DimensionValues",
-        store_data=store_life_counrty_data
+        store_data=store_country_data
     )
 
     fetch_and_store_data(
@@ -47,11 +47,77 @@ def import_data():
         store_data=store_obesity_prevalence_data
     )
 
+    fetch_and_store_data(
+        db=db,
+        Table=HypertensionPrevalence,
+        url="https://ghoapi.azureedge.net/api/NCD_HYP_TREATMENT_A",
+        store_data=store_hypertension_prevalence_data
+    )
+
+    fetch_and_store_data(
+        db=db,
+        Table=DeathProbability,
+        url="https://ghoapi.azureedge.net/api/NCDMORT3070",
+        store_data=store_death_probability_data
+    )
+
     db.close()
     return {"message": "Daten erfolgreich importiert"}
 
+@app.get("/death-probability")
+def get_death_probability(
+    country: str,
+    db: Session = Depends(get_db)
+    ):
+
+    # Abfrage für das gewünschte Land und Sortierung nach Jahr
+    data = db.query(
+        DeathProbability.year,
+        func.max(case((DeathProbability.sex == 'SEX_FMLE', DeathProbability.value), else_=None)).label('female'),
+        func.max(case((DeathProbability.sex == 'SEX_MLE', DeathProbability.value), else_=None)).label('male')
+    ).filter(DeathProbability.country == country)\
+     .group_by(DeathProbability.year)\
+     .order_by(DeathProbability.year).all()
+
+    # Anpassung für das Frontend
+    response_data = [{
+        "year": entry.year,
+        "female": entry.female,
+        "male": entry.male,
+    } for entry in data]
+
+    print(country)
+
+    return response_data
+
+@app.get("/hypertension-prevalence")
+def get_hypertension_prevalence(
+    country: str,
+    db: Session = Depends(get_db)
+    ):
+
+    # Abfrage für das gewünschte Land und Sortierung nach Jahr
+    data = db.query(
+        HypertensionPrevalence.year,
+        func.max(case((HypertensionPrevalence.sex == 'SEX_FMLE', HypertensionPrevalence.value), else_=None)).label('female'),
+        func.max(case((HypertensionPrevalence.sex == 'SEX_MLE', HypertensionPrevalence.value), else_=None)).label('male')
+    ).filter(HypertensionPrevalence.country == country)\
+     .group_by(HypertensionPrevalence.year)\
+     .order_by(HypertensionPrevalence.year).all()
+
+    # Anpassung für das Frontend
+    response_data = [{
+        "year": entry.year,
+        "female": entry.female,
+        "male": entry.male,
+    } for entry in data]
+
+    print(country)
+
+    return response_data
+
 @app.get("/obesity-prevalence")
-def get_life_expectancy(
+def get_obesity_prevalence(
     country: str,
     db: Session = Depends(get_db)
     ):
@@ -154,9 +220,8 @@ def store_life_expectancy_data(db: Session, data: list):
         db.add(entry)
     db.commit()
 
-
 # Länder
-def store_life_counrty_data(db: Session, data: list):
+def store_country_data(db: Session, data: list):
     for item in data:
         entry = Countries(
             code=item['Code'],
@@ -169,6 +234,30 @@ def store_life_counrty_data(db: Session, data: list):
 def store_obesity_prevalence_data(db: Session, data: list):
     for item in data:
         entry = ObesityPrevalence(
+            country=item['SpatialDim'],
+            year=item['TimeDim'],
+            sex=item['Dim1'],
+            value=float(item['NumericValue'])
+        )
+        db.add(entry)
+    db.commit()
+
+# Prävalenz Bluthochdruck Mellitus
+def store_hypertension_prevalence_data(db: Session, data: list):
+    for item in data:
+        entry = HypertensionPrevalence(
+            country=item['SpatialDim'],
+            year=item['TimeDim'],
+            sex=item['Dim1'],
+            value=float(item['NumericValue'])
+        )
+        db.add(entry)
+    db.commit()
+
+# Sterbewahrscheinlichkeit bei Volkskrankheiten
+def store_death_probability_data(db: Session, data: list):
+    for item in data:
+        entry = DeathProbability(
             country=item['SpatialDim'],
             year=item['TimeDim'],
             sex=item['Dim1'],
