@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Dispatch, SetStateAction} from 'react';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Autocomplete, AutocompleteItem } from "@nextui-org/autocomplete";
@@ -15,12 +15,31 @@ const Home = () => {
     const [selCountry, setSelCountry] = useState<string>('DEU');
     const [dataLE, setDataLE] = useState<Chart[]>([]);
     const [dataOP, setDataOP] = useState<Chart[]>([]);
-    const [dataHP, setdataHP] = useState<Chart[]>([]);
-    const [dataDP, setdataDP] = useState<Chart[]>([]);
+    const [dataHP, setDataHP] = useState<Chart[]>([]);
+    const [dataDP, setDataDP] = useState<Chart[]>([]);
     const [countries, setCountries] = useState<Record<string, string>>({});
+
+
+    const getChartData = async (url_end: string, setFunc: Dispatch<SetStateAction<Chart[]>>) => {
+        axios.get<Chart[]>(`http://localhost:8000/${url_end}?country=${selCountry}`)
+        .then((response) => {
+            setFunc(response.data);
+        })
+        .catch((error) => {
+            console.error("Fehler beim Abrufen der Daten", error);
+        });
+    }
 
     // Abrufen der verfügbaren Länder
     useEffect(() => {
+        axios.post('http://localhost:8000/import-data')
+        .then(response => {
+            console.log('Daten wurden erfolgreich importiert:', response.data);
+        })
+        .catch(error => {
+        console.error('Fehler beim Importieren der Daten:', error);
+        });
+
         axios.get<Record<string, string>>('http://localhost:8000/countries')
         .then((response) => {
             setCountries(response.data);
@@ -33,40 +52,17 @@ const Home = () => {
     // Abrufen der Daten
     useEffect(() => {
         // Lebenserwartung
-        axios.get<Chart[]>(`http://localhost:8000/life-expectancy?country=${selCountry}`)
-        .then((response) => {
-            setDataLE(response.data);
-        })
-        .catch((error) => {
-            console.error("Fehler beim Abrufen der Daten", error);
-        });
+        getChartData("life-expectancy", setDataLE)
 
         // Prävalenz für Übergewicht
-        axios.get<Chart[]>(`http://localhost:8000/obesity-prevalence?country=${selCountry}`)
-        .then((response) => {
-            setDataOP(response.data);
-        })
-        .catch((error) => {
-            console.error("Fehler beim Abrufen der Daten", error);
-        });
-
+        getChartData("obesity-prevalence", setDataOP)
+        
         // Prävalenz für Bluthochdruck
-        axios.get<Chart[]>(`http://localhost:8000/hypertension-prevalence?country=${selCountry}`)
-        .then((response) => {
-            setdataHP(response.data);
-        })
-        .catch((error) => {
-            console.error("Fehler beim Abrufen der Daten", error);
-        });
+        getChartData("hypertension-prevalence", setDataHP)
 
         // Sterbewahrscheinlichkeit an Volkskrankheiten
-        axios.get<Chart[]>(`http://localhost:8000/death-probability?country=${selCountry}`)
-        .then((response) => {
-            setdataDP(response.data);
-        })
-        .catch((error) => {
-            console.error("Fehler beim Abrufen der Daten", error);
-        });
+        getChartData("death-probability", setDataDP)
+
     }, [selCountry]); 
 
     return (
@@ -93,7 +89,7 @@ const Home = () => {
                         colorML="#82ca9d"
                     />
                 </InfoCard>
-                <InfoCard title="Probability (%) of dying between age 30 and exact age 70 from any of cardiovascular disease, cancer, diabetes, or chronic respiratory disease">
+                <InfoCard title="Probability (%) of dying between age 30-70 from any of cardiovascular disease, cancer, diabetes, or chronic respiratory disease">
                     {/* Liniendiagramm für Männer und Frauen */}
                     <HealthLineChart
                         data={dataDP}
