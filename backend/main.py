@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Query
 from database import engine, SessionLocal, Base, get_db
 import requests
 from sqlalchemy.orm import Session
-from models import LifeExpectancy, Countries, ObesityPrevalence, HypertensionPrevalence, DeathProbability
+from models import Countries, Genders, LifeExpectancy, ObesityPrevalence, HypertensionPrevalence, DeathProbability
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, case, inspect
 
@@ -26,18 +26,26 @@ def read_root():
 def import_data():
     db: Session = SessionLocal()
 
-    fetch_and_store_data(
-        db=db,
-        Table=LifeExpectancy,
-        url="https://ghoapi.azureedge.net/api/WHOSIS_000001",
-        store_data=store_life_expectancy_data
-    )
 
     fetch_and_store_data(
         db=db,
         Table=Countries,
         url="https://ghoapi.azureedge.net/api/DIMENSION/COUNTRY/DimensionValues",
         store_data=store_country_data
+    )
+
+    fetch_and_store_data(
+        db=db,
+        Table=Genders,
+        url="https://ghoapi.azureedge.net/api/DIMENSION/Sex/DimensionValues",
+        store_data=store_gender_data
+    )
+
+    fetch_and_store_data(
+        db=db,
+        Table=LifeExpectancy,
+        url="https://ghoapi.azureedge.net/api/WHOSIS_000001",
+        store_data=store_life_expectancy_data
     )
 
     fetch_and_store_data(
@@ -208,18 +216,6 @@ def fetch_data(url: str):
 
 ## Daten aus der Api in der DB speichern 
 
-# Lebenserwartung in Jahren
-def store_life_expectancy_data(db: Session, data: list):
-    for item in data:
-        entry = LifeExpectancy(
-            country=item['SpatialDim'],
-            year=item['TimeDim'],
-            sex=item['Dim1'],
-            value=float(item['NumericValue'])
-        )
-        db.add(entry)
-    db.commit()
-
 # Länder
 def store_country_data(db: Session, data: list):
     for item in data:
@@ -230,40 +226,66 @@ def store_country_data(db: Session, data: list):
         db.add(entry)
     db.commit()
 
+# Geschlechter
+def store_gender_data(db: Session, data: list):
+    for item in data:
+        entry = Genders(
+            code=item['Code'],
+            title=item['Title']
+        )
+        db.add(entry)
+    db.commit()
+
+# Lebenserwartung in Jahren
+def store_life_expectancy_data(db: Session, data: list):
+    for item in data:
+        if item['SpatialDimType'] == 'COUNTRY': # Nur die Daten mit den Ländern
+            entry = LifeExpectancy(
+                country=item['SpatialDim'],
+                year=item['TimeDim'],
+                sex=item['Dim1'],
+                value=float(item['NumericValue'])
+            )
+            db.add(entry)
+    db.commit()
+
 # Prävalenz Übergewicht
 def store_obesity_prevalence_data(db: Session, data: list):
     for item in data:
-        entry = ObesityPrevalence(
-            country=item['SpatialDim'],
-            year=item['TimeDim'],
-            sex=item['Dim1'],
-            value=float(item['NumericValue'])
-        )
-        db.add(entry)
+        if item['SpatialDimType'] == 'COUNTRY': # Nur die Daten mit den Ländern
+            entry = ObesityPrevalence(
+                country=item['SpatialDim'],
+                year=item['TimeDim'],
+                sex=item['Dim1'],
+                value=float(item['NumericValue'])
+            )
+            db.add(entry)
     db.commit()
 
 # Prävalenz Bluthochdruck Mellitus
 def store_hypertension_prevalence_data(db: Session, data: list):
     for item in data:
-        entry = HypertensionPrevalence(
-            country=item['SpatialDim'],
-            year=item['TimeDim'],
-            sex=item['Dim1'],
-            value=float(item['NumericValue'])
-        )
-        db.add(entry)
+        if item['SpatialDimType'] == 'COUNTRY': # Nur die Daten mit den Ländern
+            entry = HypertensionPrevalence(
+                country=item['SpatialDim'],
+                year=item['TimeDim'],
+                sex=item['Dim1'],
+                value=float(item['NumericValue'])
+            )
+            db.add(entry)
     db.commit()
 
 # Sterbewahrscheinlichkeit bei Volkskrankheiten
 def store_death_probability_data(db: Session, data: list):
     for item in data:
-        entry = DeathProbability(
-            country=item['SpatialDim'],
-            year=item['TimeDim'],
-            sex=item['Dim1'],
-            value=float(item['NumericValue'])
-        )
-        db.add(entry)
+        if item['SpatialDimType'] == 'COUNTRY': # Nur die Daten mit den Ländern
+            entry = DeathProbability(
+                country=item['SpatialDim'],
+                year=item['TimeDim'],
+                sex=item['Dim1'],
+                value=float(item['NumericValue'])
+            )
+            db.add(entry)
     db.commit()
 
 # Überprüfen, ob es eine Tabelle bereits gibt (neues Anlegen von Tabellen)
