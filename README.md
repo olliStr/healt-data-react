@@ -79,4 +79,4 @@ npm run dev
 
 ### Anwendung aufrufen
 
-Öffnen Sie ihren Browser und gehen sie auf **http://localhost:3000**
+Öffnen Sie ihren Browser und gehen Sie auf **http://localhost:3000**
