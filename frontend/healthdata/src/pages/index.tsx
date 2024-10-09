@@ -32,14 +32,6 @@ const Home = () => {
 
     // Abrufen der verfügbaren Länder
     useEffect(() => {
-        axios.post('http://localhost:8000/import-data')
-        .then(response => {
-            console.log('Daten wurden erfolgreich importiert:', response.data);
-        })
-        .catch(error => {
-        console.error('Fehler beim Importieren der Daten:', error);
-        });
-
         axios.get<Record<string, string>>('http://localhost:8000/countries')
         .then((response) => {
             setCountries(response.data);

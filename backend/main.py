@@ -18,7 +18,8 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
-@app.post("/import-data")
+# Import der Daten beim starten der Anwendung
+@app.on_event("startup")
 def import_data():
     db: Session = SessionLocal()
 
@@ -48,7 +49,7 @@ def import_data():
         db=db,
         Table=ObesityPrevalence,
         url="https://ghoapi.azureedge.net/api/NCD_BMI_30C",
-        store_data=store_obesity_prevalence_dataS
+        store_data=store_obesity_prevalence_data
     )
 
     fetch_and_store_data(
@@ -90,8 +91,6 @@ def get_death_probability(
         "male": entry.male,
     } for entry in data]
 
-    print(country)
-
     return response_data
 
 @app.get("/hypertension-prevalence")
@@ -116,8 +115,6 @@ def get_hypertension_prevalence(
         "male": entry.male,
     } for entry in data]
 
-    print(country)
-
     return response_data
 
 @app.get("/obesity-prevalence")
@@ -141,8 +138,6 @@ def get_obesity_prevalence(
         "female": entry.female,
         "male": entry.male,
     } for entry in data]
-
-    print(country)
 
     return response_data
 
@@ -169,8 +164,6 @@ def get_life_expectancy(
         "male": entry.male,
     } for entry in data]
 
-    print(country)
-
     return response_data
 
 # Router für die Extraktion der einzelnen Länder (Dropdown im Frontend)
@@ -178,7 +171,6 @@ def get_life_expectancy(
 def get_countries(db: Session = Depends(get_db)):
     countries = db.query(Countries.code, Countries.title).all()
     country_dict = {sub[0]: sub[1] for sub in countries}
-    print(country_dict)
     return country_dict
 
 
