@@ -56,7 +56,7 @@ Installieren Sie alle Abhängigkeiten:
 pip install -r requirements.txt
 ```
 
-Starten Sie das Fackend:
+Starten Sie das Backend:
 
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 8000
@@ -64,7 +64,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 ### 4. Frontend installieren und starten
 
-Installieren Sie die abhängigkeiten
+Installieren Sie die Abhängigkeiten
 
 ```bash
 cd frontend
