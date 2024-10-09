@@ -1,14 +1,19 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+import os
 
-# MySQL-Verbindungs-URL (passe Benutzername, Passwort, und Datenbank an)
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://health_user:password@localhost/health_data"
+# Variablen aus der .env laden
+load_dotenv()
+
+# MySQL-Verbindungs-URL
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Datenbank-Engine erstellen
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
-# SessionFactory für die Datenbankverbindungen
+# Session für die Datenbankverbindungen
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Basis-Klasse für die Modelle

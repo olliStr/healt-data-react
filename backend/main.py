@@ -18,10 +18,6 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello, HealthData!"}
-
 @app.post("/import-data")
 def import_data():
     db: Session = SessionLocal()
@@ -52,7 +48,7 @@ def import_data():
         db=db,
         Table=ObesityPrevalence,
         url="https://ghoapi.azureedge.net/api/NCD_BMI_30C",
-        store_data=store_obesity_prevalence_data
+        store_data=store_obesity_prevalence_dataS
     )
 
     fetch_and_store_data(
@@ -177,7 +173,7 @@ def get_life_expectancy(
 
     return response_data
 
-# router für die Extraktion der einzelnen Länder (Dropdown im Frontend)
+# Router für die Extraktion der einzelnen Länder (Dropdown im Frontend)
 @app.get("/countries")
 def get_countries(db: Session = Depends(get_db)):
     countries = db.query(Countries.code, Countries.title).all()

@@ -2,9 +2,8 @@ import requests
 from sqlalchemy.orm import Session
 from models import Countries, Genders, LifeExpectancy, ObesityPrevalence, HypertensionPrevalence, DeathProbability
 
-
+# Einholen und Abspeichern der Daten in die Datenbank
 def fetch_and_store_data(db: Session, Table, url: str, store_data):
-    
     # Überprüfen, ob die Tabelle bereits existiert
     if does_table_exist(db=db, Table=Table):
         data = fetch_data(url=url)
