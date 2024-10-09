@@ -67,7 +67,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 Installieren Sie die Abhängigkeiten
 
 ```bash
-cd frontend
+cd frontend\healthdata
 npm install
 ```
 
