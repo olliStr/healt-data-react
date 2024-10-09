@@ -66,7 +66,7 @@ const Home = () => {
     }, [selCountry]); 
 
     return (
-        <div>
+        <div className='pb-6'>
             {/* Autocomplete Dropdown für Länder */}
             <Autocomplete
                 label="Choose country"
